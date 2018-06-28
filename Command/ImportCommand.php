@@ -178,7 +178,9 @@ class ImportCommand extends ContainerAwareCommand
                 if (!is_null($this->importHelper)) {
                     $this->importHelper->completeData($entity, $row, $errors);
                 }
-                $entityManager->persist($entity);
+                if (!is_null($entity)) {
+                    $entityManager->persist($entity);
+                }
             }
 
             // Persist if necessary
