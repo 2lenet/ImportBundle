@@ -4,9 +4,14 @@ services:
     autowire: true
     public: true
     autoconfigure: true
+    bind:
+      $entities: '%entities%'
 
   ClickAndMortar\ImportBundle\Command\:
     resource: '../../Command'
 
   ClickAndMortar\ImportBundle\Reader\Readers\:
     resource: '../../Reader/Readers'
+
+  ClickAndMortar\ImportBundle\Service\:
+    resource: '../../Service'

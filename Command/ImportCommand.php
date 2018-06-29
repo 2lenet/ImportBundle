@@ -5,6 +5,7 @@ namespace ClickAndMortar\ImportBundle\Command;
 use ClickAndMortar\ImportBundle\ImportHelper\ImportHelperInterface;
 use ClickAndMortar\ImportBundle\Reader\AbstractReader;
 use ClickAndMortar\ImportBundle\Reader\Readers\CsvReader;
+use ClickAndMortar\ImportBundle\Service\ImportService;
 
 use Doctrine\ORM\EntityManager;
 use InvalidArgumentException;
@@ -23,27 +24,17 @@ use Symfony\Component\Console\Output\OutputInterface;
 class ImportCommand extends ContainerAwareCommand
 {
     /**
-     * Persist 30 per 30 entities in same time
-     *
-     * @var integer
-     */
-    const CHUNK_SIZE = 30;
-
-    /**
-     * @var AbstractReader
-     */
-    protected $reader = null;
-
-    /**
      * Import helper
      *
      * @var ImportHelperInterface
      */
     protected $importHelper = null;
+    protected $importService = null;
 
-    public function __construct(CsvReader $reader)
+    public function __construct(ImportService $importService, $entities)
     {
-      $this->reader = $reader;
+      $this->importService = $importService;
+      $this->entities = $entities;
       parent::__construct();
     }
     /**
@@ -128,76 +119,12 @@ class ImportCommand extends ContainerAwareCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $container           = $this->getContainer();
-        $entities            = $container->getParameter('entities');
+        $importService      = $this->importService;
         $path                = $input->getArgument('path');
         $entity              = $input->getArgument('entity');
-        $entityConfiguration = $entities[$entity];
         $errors              = array();
 
-        /** @var EntityManager $entityManager */
-        $entityManager   = $container->get('doctrine')->getManager();
-        $repository      = $entityManager->getRepository($entityConfiguration['repository']);
-        $uniqueKey       = isset($entityConfiguration['unique_key']) ? $entityConfiguration['unique_key']: null;
-        $mapping         = $entityConfiguration['mappings'];
-        $entityClassname = $entityConfiguration['model'];
-        $onlyUpdate      = $entityConfiguration['only_update'];
-
-        // Read file
-        $rows     = $this->reader->read($path);
-        $size     = count($rows);
-        $index    = 1;
-        $progress = new ProgressBar($output, $size);
-        $progress->start();
-
-        // Create each entity
-        foreach ($rows as $row) {
-            if ($uniqueKey) {
-                $criteria = array(
-                    $uniqueKey => trim($row[$mapping[$uniqueKey]]),
-                );
-                $entity   = $repository->findOneBy($criteria);
-            } else {
-                $entity = null;
-            }
-            if (is_null($entity) && $onlyUpdate === false) {
-                $entity = new $entityClassname();
-            }
-
-            if (!is_null($entity)) {
-                // Set fields
-                foreach ($mapping as $entityPropertyKey => $filePropertyKey) {
-                    $setter = sprintf(
-                        'set%s',
-                        ucfirst($entityPropertyKey)
-                    );
-                    $entity->{$setter}(trim($row[$filePropertyKey]));
-                }
-
-                // Complete data if necessary
-                if (!is_null($this->importHelper)) {
-                    $this->importHelper->completeData($entity, $row, $errors);
-                }
-                if (!is_null($entity)) {
-                    $entityManager->persist($entity);
-                }
-            }
-
-            // Persist if necessary
-            if (($index % self::CHUNK_SIZE) === 0) {
-                $entityManager->flush();
-                $entityManager->clear();
-                $progress->advance(self::CHUNK_SIZE);
-            }
-            $index++;
-        }
-        $entityManager->flush();
-        $entityManager->clear();
-        $progress->finish();
-
-        if ($input->getOption('delete-after-import') == true) {
-            unlink($path);
-        }
+        $errors = $this->importService->import($path, $entity, $input->getOption('delete-after-import'));
 
         // Print errors if necessary
         foreach ($errors as $error) {
