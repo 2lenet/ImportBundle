@@ -99,6 +99,11 @@ class ImportService
             $repository->truncateTable();
             $this->em->flush();
         }
+
+        if (!is_null($this->importHelper)) {
+            $this->importHelper->beforeImport();
+        }
+
         // Read file
         $rows     = $this->reader->read($path);
         $size     = count($rows);
@@ -149,6 +154,10 @@ class ImportService
         $this->count = ['lines' => $index, 'entities' => $nb];
         $entityManager->flush();
         $entityManager->clear();
+        if (!is_null($this->importHelper)) {
+            $this->importHelper->afterImport();
+        }
+
         if ($delete_after_import == true) {
             unlink($path);
         }

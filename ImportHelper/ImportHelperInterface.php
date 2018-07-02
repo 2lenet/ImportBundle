@@ -18,4 +18,6 @@ interface ImportHelperInterface
      * @return void
      */
     public function completeData(&$entity, array $data, array &$errors);
+    public function beforeImport();
+    public function afterImport();
 }
