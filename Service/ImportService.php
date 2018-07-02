@@ -94,7 +94,8 @@ class ImportService
         $entityClassname = $entityConfiguration['model'];
         $onlyUpdate      = $entityConfiguration['only_update'];
         $truncate        = isset($entityConfiguration['truncate']) ?  $entityConfiguration['truncate']: 0;
-        
+        $streamFilter    = isset($entityConfiguration['stream_filter']) ?  $entityConfiguration['stream_filter']: null;
+
         if ($truncate) {
             $repository->truncateTable();
             $this->em->flush();
@@ -105,7 +106,7 @@ class ImportService
         }
 
         // Read file
-        $rows     = $this->reader->read($path);
+        $rows     = $this->reader->read($path, $streamFilter);
         $size     = count($rows);
         $index    = 0;
         $nb    = 0;

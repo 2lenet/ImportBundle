@@ -23,7 +23,7 @@ class CsvReader extends AbstractReader
 
         $resolver->setDefaults(
             array(
-                'delimiter' => ',',
+                'delimiter' => ','
             )
         );
     }
@@ -35,12 +35,16 @@ class CsvReader extends AbstractReader
      *
      * @return array
      */
-    public function read($path)
+    public function read($path, $stream_filter=null)
     {
         $data = array();
 
         $header = null;
         $handle = fopen($path, 'r');
+        if ($stream_filter) {
+            stream_filter_append($handle, $stream_filter, STREAM_FILTER_READ);
+        }
+
         while ($row = fgetcsv($handle, null, $this->options['delimiter'])) {
             if (is_null($header)) {
                 $header = $row;
