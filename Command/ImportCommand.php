@@ -126,6 +126,9 @@ class ImportCommand extends ContainerAwareCommand
 
         $errors = $this->importService->import($path, $entity, $input->getOption('delete-after-import'));
 
+        $count = $this->importService->getCount();
+        $output->writeln('Nb lines:'.$count['lines']);
+        $output->writeln('Items:'.$count['entities']);
         // Print errors if necessary
         foreach ($errors as $error) {
             $output->writeln(sprintf('<error>%s</error>', $error));

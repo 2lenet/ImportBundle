@@ -36,6 +36,8 @@ class ImportService
 
     protected $entities = null;
 
+    protected $counts = [];
+
     protected $em = null;
 
     /**
@@ -48,6 +50,7 @@ class ImportService
       $this->reader = $reader;
       $this->entities = $entities;
       $this->em = $em;
+      $this->counts = [];
       $this->container = $container;
     }
 
@@ -76,7 +79,7 @@ class ImportService
      *
      * @return int|null|void
      */
-    public function import($path, $entity, $delete_after=false)
+    public function import($path, $entity, $delete_after_import=false)
     {
         $entities            = $this->entities;
         $entityConfiguration = $entities[$entity];
@@ -90,11 +93,17 @@ class ImportService
         $mapping         = $entityConfiguration['mappings'];
         $entityClassname = $entityConfiguration['model'];
         $onlyUpdate      = $entityConfiguration['only_update'];
-
+        $truncate        = isset($entityConfiguration['truncate']) ?  $entityConfiguration['truncate']: 0;
+        
+        if ($truncate) {
+            $repository->truncateTable();
+            $this->em->flush();
+        }
         // Read file
         $rows     = $this->reader->read($path);
         $size     = count($rows);
-        $index    = 1;
+        $index    = 0;
+        $nb    = 0;
 
         // Create each entity
         foreach ($rows as $row) {
@@ -126,6 +135,7 @@ class ImportService
                 }
                 if (!is_null($entity)) {
                     $entityManager->persist($entity);
+                    $nb++;
                 }
             }
 
@@ -136,11 +146,17 @@ class ImportService
             }
             $index++;
         }
+        $this->count = ['lines' => $index, 'entities' => $nb];
         $entityManager->flush();
         $entityManager->clear();
-        if ($delete-after-import == true) {
+        if ($delete_after_import == true) {
             unlink($path);
         }
         return $errors;
+    }
+
+    public function getCount()
+    {
+        return $this->count;
     }
 }
