@@ -1,17 +1,24 @@
 services:
 
-  _defaults:
-    autowire: true
-    public: true
-    autoconfigure: true
-    bind:
-      $entities: '%entities%'
+    _defaults:
+        autowire: true
+        public: true
+        autoconfigure: true
+        bind:
+            $entities: '%entities%'
 
-  ClickAndMortar\ImportBundle\Command\:
-    resource: '../../Command'
+    ClickAndMortar\ImportBundle\Command\:
+        resource: '../../Command'
 
-  ClickAndMortar\ImportBundle\Reader\Readers\:
-    resource: '../../Reader/Readers'
+    ClickAndMortar\ImportBundle\Reader\Readers\:
+        resource: '../../Reader/Readers'
 
-  ClickAndMortar\ImportBundle\Service\:
-    resource: '../../Service'
+    ClickAndMortar\ImportBundle\Service\:
+        resource: '../../Service'
+        
+    ClickAndMortar\ImportBundle\Service\ImportService:
+        public: false
+
+    click_and_mortar.import:
+        alias: ClickAndMortar\ImportBundle\Service\ImportService
+        public: true
