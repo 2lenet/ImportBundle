@@ -11,14 +11,14 @@ Add package your **`composer.json`** file:
 ```javascript
 "require": {
     ...
-    "clickandmortar/import-bundle": "^1.0"
+    "2lenet/import-bundle": "^1.0"
     ...
 }
 ```
 
 Launch `composer update` to add bundle to your project:
 ```bash
-composer update clickandmortar/import-bundle
+composer update 2lenet/import-bundle
 ```
 
 Add bundle in your **`app/AppKernel.php`** file:
