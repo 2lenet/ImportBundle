@@ -67,7 +67,7 @@ class ImportService
                     $entity
                 );
 
-                throw new InvalidArgumentException($errorMessage);
+                throw new \InvalidArgumentException($errorMessage);
             }
         }
     }
