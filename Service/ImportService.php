@@ -23,7 +23,7 @@ class ImportService
     const CHUNK_SIZE = 30;
 
     /**
-     * @var AbstractReader
+     * @var CsvReader
      */
     protected $reader = null;
 
@@ -106,13 +106,12 @@ class ImportService
         }
 
         // Read file
-        $rows     = $this->reader->read($path, $streamFilter);
-        $size     = count($rows);
+        $this->reader->setStreamFilter($streamFilter);
         $index    = 0;
         $nb    = 0;
 
         // Create each entity
-        foreach ($rows as $row) {
+        foreach ($this->reader->read($path) as $row) {
             if ($uniqueKey) {
                 $criteria = array(
                     $uniqueKey => trim($row[$mapping[$uniqueKey]]),
@@ -146,7 +145,7 @@ class ImportService
             }
 
             // Persist if necessary
-            if (($index % self::CHUNK_SIZE) === 0) {
+            if (($nb % self::CHUNK_SIZE) === 0) {
                 $entityManager->flush();
                 $entityManager->clear();
             }

@@ -10,13 +10,12 @@ namespace ClickAndMortar\ImportBundle\Reader;
 interface ReaderInterface
 {
     /**
-     * Read a file from $path and return data array
-     *
+     * Read CSV file and return data array
+     * 
      * @param string $path
-     *
-     * @return array mixed
+     * @return Generator
      */
-    public function read($path);
+    public function read(string $path) :\Generator;
 
     /**
      * Check if reader support $type

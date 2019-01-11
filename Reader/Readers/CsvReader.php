@@ -12,6 +12,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class CsvReader extends AbstractReader
 {
+    
+    private $stream_filter = null;
+    
     /**
      * Configure options.
      *
@@ -27,34 +30,35 @@ class CsvReader extends AbstractReader
             )
         );
     }
+    
+    public function setStreamFilter($stream_filter)
+    {
+        $this->stream_filter = $stream_filter;
+    }
 
     /**
-     * Read CSV file and return data array
-     *
-     * @param string $path
-     *
-     * @return array
+     * 
+     * {@inheritDoc}
+     * @see \ClickAndMortar\ImportBundle\Reader\ReaderInterface::read()
      */
-    public function read($path, $stream_filter=null)
+    public function read($path) :\Generator
     {
         $data = array();
 
         $header = null;
         $handle = fopen($path, 'r');
-        if ($stream_filter) {
-            stream_filter_append($handle, $stream_filter, STREAM_FILTER_READ);
+        if ($this->stream_filter) {
+            stream_filter_append($handle, $this->stream_filter, STREAM_FILTER_READ);
         }
 
         while ($row = fgetcsv($handle, null, $this->options['delimiter'])) {
             if (is_null($header)) {
                 $header = $row;
             } else {
-                $data[] = array_combine($header, $row);
+                yield array_combine($header, $row);
             }
         }
         fclose($handle);
-
-        return $data;
     }
 
     /**
