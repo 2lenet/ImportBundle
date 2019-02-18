@@ -44,14 +44,14 @@ class ImportService
      * @var ContainerInterface
      */
     private $container;
-    
+
     public function __construct(CsvReader $reader, EntityManagerInterface $em, $entities, ContainerInterface $container)
     {
-      $this->reader = $reader;
-      $this->entities = $entities;
-      $this->em = $em;
-      $this->counts = [];
-      $this->container = $container;
+        $this->reader = $reader;
+        $this->entities = $entities;
+        $this->em = $em;
+        $this->counts = [];
+        $this->container = $container;
     }
 
 
@@ -109,9 +109,10 @@ class ImportService
         $this->reader->setStreamFilter($streamFilter);
         $index    = 0;
         $nb    = 0;
-
+        $line = 1;
         // Create each entity
         foreach ($this->reader->read($path) as $row) {
+            $line++;
             if ($uniqueKey) {
                 $criteria = array(
                     $uniqueKey => trim($row[$mapping[$uniqueKey]]),
@@ -136,7 +137,12 @@ class ImportService
 
                 // Complete data if necessary
                 if (!is_null($this->importHelper)) {
-                    $this->importHelper->completeData($entity, $row, $errors);
+                    if (is_bool($row)) {
+                        $errors[] = 'the line n°'.$line.' couldn\'t be imported';
+                    } else {
+                        $this->importHelper->completeData($entity, $row, $errors);
+                    }
+
                 }
                 if (!is_null($entity)) {
                     $entityManager->persist($entity);
