@@ -45,8 +45,12 @@ class ImportService
      */
     private $container;
 
-    public function __construct(CsvReader $reader, EntityManagerInterface $em, $entities, ContainerInterface $container)
-    {
+    public function __construct(
+        CsvReader $reader,
+        EntityManagerInterface $em,
+        $entities,
+        ContainerInterface $container
+    ) {
         $this->reader = $reader;
         $this->entities = $entities;
         $this->em = $em;
@@ -54,47 +58,28 @@ class ImportService
         $this->container = $container;
     }
 
-
-    public function check($entity)
-    {
-        $importHelperService = isset($this->entities[$entity]['import_helper_service']) ? $this->entities[$entity]['import_helper_service'] : null;
-        if (!is_null($importHelperService)) {
-            if ($this->container->has($importHelperService)) {
-                $this->importHelper =  $this->container->get($importHelperService);
-            } else {
-                $errorMessage = sprintf(
-                    '%s import helper does not exist',
-                    $entity
-                );
-
-                throw new \InvalidArgumentException($errorMessage);
-            }
-        }
-    }
-
-
     /**
      * Execute import
      *
      *
      * @return int|null|void
      */
-    public function import($path, $entity, $delete_after_import=false)
+    public function import( $path, $entity, $delete_after_import = false )
     {
-        $entities            = $this->entities;
+        $entities = $this->entities;
         $entityConfiguration = $entities[$entity];
-        $errors              = array();
+        $errors = array();
         $this->check($entity);
 
         /** @var EntityManager $entityManager */
-        $entityManager   = $this->em;
-        $repository      = $entityManager->getRepository($entityConfiguration['repository']);
-        $uniqueKey       = isset($entityConfiguration['unique_key']) ? $entityConfiguration['unique_key']: null;
-        $mapping         = $entityConfiguration['mappings'];
+        $entityManager = $this->em;
+        $repository = $entityManager->getRepository($entityConfiguration['repository']);
+        $uniqueKey = isset($entityConfiguration['unique_key']) ? $entityConfiguration['unique_key'] : null;
+        $mapping = $entityConfiguration['mappings'];
         $entityClassname = $entityConfiguration['model'];
-        $onlyUpdate      = $entityConfiguration['only_update'];
-        $truncate        = isset($entityConfiguration['truncate']) ?  $entityConfiguration['truncate']: 0;
-        $streamFilter    = isset($entityConfiguration['stream_filter']) ?  $entityConfiguration['stream_filter']: null;
+        $onlyUpdate = $entityConfiguration['only_update'];
+        $truncate = isset($entityConfiguration['truncate']) ? $entityConfiguration['truncate'] : 0;
+        $streamFilter = isset($entityConfiguration['stream_filter']) ? $entityConfiguration['stream_filter'] : null;
 
         if ($truncate) {
             $repository->truncateTable();
@@ -107,17 +92,17 @@ class ImportService
 
         // Read file
         $this->reader->setStreamFilter($streamFilter);
-        $index    = 0;
-        $nb    = 0;
+        $index = 0;
+        $nb = 0;
         $line = 1;
         // Create each entity
         foreach ($this->reader->read($path) as $row) {
             $line++;
             if ($uniqueKey) {
                 $criteria = array(
-                    $uniqueKey => trim($row[$mapping[$uniqueKey]]),
+                    $uniqueKey => $this->getValue($mapping[$uniqueKey], $row),
                 );
-                $entity   = $repository->findOneBy($criteria);
+                $entity = $repository->findOneBy($criteria);
             } else {
                 $entity = null;
             }
@@ -132,7 +117,7 @@ class ImportService
                         'set%s',
                         ucfirst($entityPropertyKey)
                     );
-                    $entity->{$setter}(trim($row[$filePropertyKey]));
+                    $entity->{$setter}($this->getValue($filePropertyKey, $row));
                 }
 
                 // Complete data if necessary
@@ -167,7 +152,37 @@ class ImportService
         if ($delete_after_import == true) {
             unlink($path);
         }
+
         return $errors;
+    }
+
+    protected function getValue($keys, $row)
+    {
+        if (!is_array($keys)) {
+            return trim($row[$keys]);
+        }
+        $value = '';
+        foreach ($keys as $key) {
+            $value .= trim($row[$key]);
+        }
+        return $value;
+    }
+
+    public function check( $entity )
+    {
+        $importHelperService = isset($this->entities[$entity]['import_helper_service']) ? $this->entities[$entity]['import_helper_service'] : null;
+        if (!is_null($importHelperService)) {
+            if ($this->container->has($importHelperService)) {
+                $this->importHelper = $this->container->get($importHelperService);
+            } else {
+                $errorMessage = sprintf(
+                    '%s import helper does not exist',
+                    $entity
+                );
+
+                throw new \InvalidArgumentException($errorMessage);
+            }
+        }
     }
 
     public function getCount()
