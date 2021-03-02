@@ -17,8 +17,8 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('click_and_mortar_import');
+        $treeBuilder = new TreeBuilder('click_and_mortar_import');
+        $rootNode = $treeBuilder->getRootNode();
         $rootNode
             ->children()
             ->arrayNode('entities')
