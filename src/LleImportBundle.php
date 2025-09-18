@@ -9,7 +9,10 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class LleImportBundle extends Bundle
 {
-    public function build(ContainerBuilder $container): void
+    /**
+     * @return void
+     */
+    public function build(ContainerBuilder $container)
     {
     }
 }

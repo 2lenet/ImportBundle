@@ -1,0 +1,27 @@
+services:
+    _defaults:
+        autowire: true
+        public: false
+        autoconfigure: true
+
+    Lle\ImportBundle\Command\:
+        resource: '../../Command'
+
+    Lle\ImportBundle\Reader\Reader:
+        arguments:
+            $readers: !tagged_iterator import.reader
+
+    Lle\ImportBundle\Reader\:
+        exclude: '../../Reader/Reader.php'
+        resource: '../../Reader'
+        tags: [import.reader]
+
+    Lle\ImportBundle\Service\:
+        resource: '../../Service'
+
+    Lle\ImportBundle\Service\ImportService:
+        arguments:
+            - '@parameter_bag'
+            - '@service_container'
+            - '@doctrine.orm.entity_manager'
+            - '@Lle\ImportBundle\Reader\Reader'
