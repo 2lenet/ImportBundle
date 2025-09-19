@@ -22,11 +22,19 @@ class ImportService
         $this->configurations = $this->parameterBag->get('lle_import.configs');
     }
 
-    public function import(string $path, string $configName, bool $deleteAfterImport = false): int
-    {
+    /**
+     * @throws ImportException
+     */
+    public function import(
+        string $path,
+        string $configName,
+        bool $deleteAfterImport = false,
+        array $additionnalData = []
+    ): int {
         $this->checkFileExists($path);
         $this->checkFileIsReadable($path);
         $this->checkConfigExists($configName);
+        $this->checkConfigEntityExists($this->configurations[$configName]);
 
         $config = $this->configurations[$configName];
         $entityClassName = $config['entity'];
@@ -40,9 +48,7 @@ class ImportService
 
         $repository = $this->em->getRepository($entityClassName);
 
-        if ($importHelper) {
-            $importHelper->beforeImport();
-        }
+        $importHelper?->beforeImport($additionnalData);
 
         $nb = 0;
         foreach ($this->reader->read($path) as $row) {
@@ -62,9 +68,7 @@ class ImportService
                 }
             }
 
-            if ($importHelper) {
-                $importHelper->completeData($entity, $row);
-            }
+            $importHelper?->completeData($entity, $row, $additionnalData);
 
             $this->em->persist($entity);
             $nb++;
@@ -76,9 +80,7 @@ class ImportService
 
         $this->em->flush();
 
-        if ($importHelper) {
-            $importHelper->afterImport();
-        }
+        $importHelper?->afterImport($additionnalData);
 
         if ($deleteAfterImport) {
             unlink($path);
@@ -87,6 +89,9 @@ class ImportService
         return $nb;
     }
 
+    /**
+     * @throws ImportException
+     */
     public function checkFileExists(string $path): void
     {
         if (!file_exists($path)) {
@@ -94,6 +99,9 @@ class ImportService
         }
     }
 
+    /**
+     * @throws ImportException
+     */
     public function checkFileIsReadable(string $path): void
     {
         if (!is_readable($path)) {
@@ -101,6 +109,9 @@ class ImportService
         }
     }
 
+    /**
+     * @throws ImportException
+     */
     public function checkConfigExists(string $config): void
     {
         if (!array_key_exists($config, $this->configurations)) {
@@ -108,6 +119,19 @@ class ImportService
         }
     }
 
+    /**
+     * @throws ImportException
+     */
+    public function checkConfigEntityExists(array $config): void
+    {
+        if (!array_key_exists('entity', $config)) {
+            throw new ImportException('Config "entity" must be defined.');
+        }
+    }
+
+    /**
+     * @throws ImportException
+     */
     public function getImportHelperService(array $config): ?ImportHelperInterface
     {
         if (array_key_exists('import_helper_service', $config) && $config['import_helper_service']) {
