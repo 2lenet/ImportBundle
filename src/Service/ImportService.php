@@ -22,13 +22,13 @@ class ImportService
         $this->configurations = $this->parameterBag->get('lle_import.configs');
     }
 
-    public function import(string $path, string $config, bool $deleteAfterImport = false): int
+    public function import(string $path, string $configName, bool $deleteAfterImport = false): int
     {
         $this->checkFileExists($path);
         $this->checkFileIsReadable($path);
-        $this->checkConfigExists($config);
+        $this->checkConfigExists($configName);
 
-        $config = $this->configurations[$config];
+        $config = $this->configurations[$configName];
         $entityClassName = $config['entity'];
         $uniqueKey = null;
         if (array_key_exists('unique_key', $config) && $config['unique_key']) {
