@@ -14,7 +14,8 @@
         "php": "^8.4",
         "doctrine/orm": "^2.6,>=2.6.3",
         "symfony/console": "^7.0",
-        "symfony/dependency-injection": "^7.0"
+        "symfony/dependency-injection": "^7.0",
+        "symfony/property-access": "^7.0"
     },
     "require-dev": {
         "ergebnis/phpstan-rules": "^2.1",

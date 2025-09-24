@@ -8,6 +8,7 @@ use Lle\ImportBundle\Exception\ImportException;
 use Lle\ImportBundle\Reader\Reader;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
 class ImportService
 {
@@ -18,6 +19,7 @@ class ImportService
         protected ContainerInterface $container,
         protected EntityManagerInterface $em,
         protected Reader $reader,
+        protected PropertyAccessorInterface $propertyAccessor,
     ) {
         $this->configurations = $this->parameterBag->get('lle_import.configs');
     }
@@ -62,9 +64,8 @@ class ImportService
             }
 
             foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
-                $setter = 'set' . ucfirst($entityPropertyKey);
                 if ($value = $this->getValue($filePropertyKey, $row)) {
-                    $entity->{$setter}($value);
+                    $this->propertyAccessor->setValue($entity, $entityPropertyKey, $value);
                 }
             }
 
