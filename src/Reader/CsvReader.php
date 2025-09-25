@@ -4,9 +4,9 @@ namespace Lle\ImportBundle\Reader;
 
 class CsvReader extends AbstractReader
 {
-    public function getSupportedFormat(): string
+    public function getSupportedMimeTypes(): array
     {
-        return Reader::CSV;
+        return [Reader::CSV];
     }
 
     public function read($path): \Generator

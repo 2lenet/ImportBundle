@@ -7,7 +7,7 @@ use Lle\ImportBundle\Exception\ReaderException;
 
 class Reader
 {
-    public const string CSV = 'csv';
+    public const string CSV = 'text/csv';
 
     public function __construct(
         protected iterable $readers,
@@ -16,14 +16,14 @@ class Reader
 
     public function read(string $path): iterable
     {
-        return $this->getReader(pathinfo($path, PATHINFO_EXTENSION))->read($path);
+        return $this->getReader(mime_content_type($path))->read($path);
     }
 
     public function getReader(string $format): ReaderInterface
     {
         /** @var ReaderInterface $reader */
         foreach ($this->readers as $reader) {
-            if ($format === $reader->getSupportedFormat()) {
+            if (in_array($format, $reader->getSupportedMimeTypes())) {
                 return $reader;
             }
         }

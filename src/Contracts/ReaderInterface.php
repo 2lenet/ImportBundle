@@ -4,7 +4,7 @@ namespace Lle\ImportBundle\Contracts;
 
 interface ReaderInterface
 {    
-    public function getSupportedFormat(): string;
+    public function getSupportedMimeTypes(): array;
 
     public function read(string $path): iterable;
 }

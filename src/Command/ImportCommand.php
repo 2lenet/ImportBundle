@@ -24,7 +24,7 @@ class ImportCommand extends Command
         $this
             ->addArgument('path', InputArgument::REQUIRED)
             ->addArgument('config', InputArgument::REQUIRED)
-            ->addOption('delete-after-import', InputOption::VALUE_NONE);
+            ->addOption('delete-after-import', mode: InputOption::VALUE_NONE);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
