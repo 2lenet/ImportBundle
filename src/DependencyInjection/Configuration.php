@@ -20,6 +20,7 @@ class Configuration implements ConfigurationInterface
                         ->children()
                             ->scalarNode('entity')->isRequired()->cannotBeEmpty()->end()
                             ->scalarNode('unique_key')->end()
+                            ->booleanNode('clear_entity')->defaultFalse()->end()
                             ->scalarNode('import_helper_service')->end()
                             ->arrayNode('mappings')->requiresAtLeastOneElement()->variablePrototype()->end()
                         ->end()

@@ -50,6 +50,10 @@ class ImportService
 
         $repository = $this->em->getRepository($entityClassName);
 
+        if ($config['clear_entity']) {
+            $repository->createQueryBuilder('root')->delete()->getQuery()->execute();
+        }
+
         $importHelper?->beforeImport($additionnalData);
 
         $nb = 0;
