@@ -63,23 +63,25 @@ class ImportService
                 $entity = $repository->findOneBy([$uniqueKey => $this->getValue($mappings[$uniqueKey], $row)]);
             }
 
-            if (!$entity) {
+            if (!$entity && !$config['only_update']) {
                 $entity = new $entityClassName();
             }
 
-            foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
-                if ($value = $this->getValue($filePropertyKey, $row)) {
-                    $this->propertyAccessor->setValue($entity, $entityPropertyKey, $value);
+            if ($entity) {
+                foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
+                    if ($value = $this->getValue($filePropertyKey, $row)) {
+                        $this->propertyAccessor->setValue($entity, $entityPropertyKey, $value);
+                    }
                 }
-            }
 
-            $importHelper?->completeData($entity, $row, $additionnalData);
+                $importHelper?->completeData($entity, $row, $additionnalData);
 
-            $this->em->persist($entity);
-            $nb++;
+                $this->em->persist($entity);
+                $nb++;
 
-            if ($nb % 1000 === 0) {
-                $this->em->flush();
+                if ($nb % 1000 === 0) {
+                    $this->em->flush();
+                }
             }
         }
 
