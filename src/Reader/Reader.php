@@ -14,11 +14,17 @@ class Reader
     ) {
     }
 
-    public function read(string $path): iterable
+    /**
+     * @throws ReaderException
+     */
+    public function read(string $path, ?string $encoding = null): iterable
     {
-        return $this->getReader(mime_content_type($path))->read($path);
+        return $this->getReader(mime_content_type($path))->read($path, $encoding);
     }
 
+    /**
+     * @throws ReaderException
+     */
     public function getReader(string $format): ReaderInterface
     {
         /** @var ReaderInterface $reader */

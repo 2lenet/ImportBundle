@@ -4,7 +4,9 @@ namespace Lle\ImportBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Lle\ImportBundle\Contracts\ImportHelperInterface;
+use Lle\ImportBundle\Contracts\ReaderInterface;
 use Lle\ImportBundle\Exception\ImportException;
+use Lle\ImportBundle\Exception\ReaderException;
 use Lle\ImportBundle\Reader\Reader;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -26,6 +28,7 @@ class ImportService
 
     /**
      * @throws ImportException
+     * @throws ReaderException
      */
     public function import(
         string $path,
@@ -37,6 +40,7 @@ class ImportService
         $this->checkFileIsReadable($path);
         $this->checkConfigExists($configName);
         $this->checkConfigEntityExists($this->configurations[$configName]);
+        $this->checkConfigMappingsExists($this->configurations[$configName]);
 
         $config = $this->configurations[$configName];
         $entityClassName = $config['entity'];
@@ -50,20 +54,26 @@ class ImportService
 
         $repository = $this->em->getRepository($entityClassName);
 
-        if ($config['clear_entity']) {
+        if (array_key_exists('clear_entity', $config) && $config['clear_entity']) {
             $repository->createQueryBuilder('root')->delete()->getQuery()->execute();
         }
 
         $importHelper?->beforeImport($additionnalData);
 
+        $encoding = null;
+        if (array_key_exists('encoding', $config) && $config['encoding']) {
+            $encoding = $config['encoding'];
+        }
+
         $nb = 0;
-        foreach ($this->reader->read($path) as $row) {
+        $reader = $this->getReader($config);
+        foreach ($reader ? $reader->read($path, $encoding) : $this->reader->read($path, $encoding) as $row) {
             $entity = null;
             if ($uniqueKey) {
                 $entity = $repository->findOneBy([$uniqueKey => $this->getValue($mappings[$uniqueKey], $row)]);
             }
 
-            if (!$entity && !$config['only_update']) {
+            if (!$entity && (!array_key_exists('only_update', $config) || !$config['only_update'])) {
                 $entity = new $entityClassName();
             }
 
@@ -139,6 +149,16 @@ class ImportService
     /**
      * @throws ImportException
      */
+    public function checkConfigMappingsExists(array $config): void
+    {
+        if (!array_key_exists('mappings', $config)) {
+            throw new ImportException('Config "mappings" must be defined.');
+        }
+    }
+
+    /**
+     * @throws ImportException
+     */
     public function getImportHelperService(array $config): ?ImportHelperInterface
     {
         if (array_key_exists('import_helper_service', $config) && $config['import_helper_service']) {
@@ -146,7 +166,33 @@ class ImportService
                 throw new ImportException('Import helper "' . $config['import_helper_service'] . '" does not exist.');
             }
 
-            return $this->container->get($config['import_helper_service']);
+            $importHelper = $this->container->get($config['import_helper_service']);
+            if (!is_a($importHelper, ImportHelperInterface::class)) {
+                throw new ImportException('Import helper "' . $config['import_helper_service'] . '" does not implement ImportHelperInterface.');
+            }
+
+            return $importHelper;
+        }
+
+        return null;
+    }
+
+    /**
+     * @throws ImportException
+     */
+    public function getReader(array $config): ?ReaderInterface
+    {
+        if (array_key_exists('reader', $config) && $config['reader']) {
+            if (!$this->container->has($config['reader'])) {
+                throw new ImportException('Reader "' . $config['reader'] . '" does not exist.');
+            }
+
+            $reader = $this->container->get($config['reader']);
+            if (!is_a($reader, ReaderInterface::class)) {
+                throw new ImportException('Reader "' . $config['reader'] . '" does not implement ReaderInterface.');
+            }
+
+            return $reader;
         }
 
         return null;
