@@ -16,6 +16,8 @@ class ImportService
 {
     protected array $configurations = [];
 
+    protected int $nbLinesImported = 0;
+
     public function __construct(
         protected ParameterBagInterface $parameterBag,
         protected ContainerInterface $container,
@@ -39,6 +41,45 @@ class ImportService
         $this->checkFileExists($path);
         $this->checkFileIsReadable($path);
         $this->checkConfigExists($configName);
+
+        $config = $this->configurations[$configName];
+        $importHelper = $this->getImportHelperService($config);
+
+        $importHelper?->beforeImport($additionnalData);
+
+        $options = [];
+        if (array_key_exists('options', $config) && $config['options']) {
+            $options = $config['options'];
+        }
+
+        $reader = $this->getReader($config);
+        foreach ($reader ? $reader->read($path, $options) : $this->reader->read($path, $options) as $row) {
+            $this->create($row, $configName, additionnalData: $additionnalData);
+
+            if ($this->nbLinesImported % 1000 === 0) {
+                $this->em->flush();
+            }
+        }
+
+        $this->em->flush();
+
+        $importHelper?->afterImport($additionnalData);
+
+        if ($deleteAfterImport) {
+            unlink($path);
+        }
+
+        return $this->nbLinesImported;
+    }
+
+    public function create(
+        array $row,
+        string $configName,
+        ?string $subPropertyKey = null,
+        ?object $previousEntity = null,
+        array $additionnalData = []
+    ): void {
+        $this->checkConfigExists($configName);
         $this->checkConfigEntityExists($this->configurations[$configName]);
         $this->checkConfigMappingsExists($this->configurations[$configName]);
 
@@ -58,52 +99,61 @@ class ImportService
             $repository->createQueryBuilder('root')->delete()->getQuery()->execute();
         }
 
-        $importHelper?->beforeImport($additionnalData);
-
         $encoding = null;
         if (array_key_exists('encoding', $config) && $config['encoding']) {
-            $encoding = $config['encoding'];
+            $options['encoding'] = $config['encoding'];
         }
 
-        $nb = 0;
-        $reader = $this->getReader($config);
-        foreach ($reader ? $reader->read($path, $encoding) : $this->reader->read($path, $encoding) as $row) {
-            $entity = null;
-            if ($uniqueKey) {
-                $entity = $repository->findOneBy([$uniqueKey => $this->getValue($mappings[$uniqueKey], $row)]);
-            }
+        $subMappings = [];
+        if (array_key_exists('sub_mappings', $config) && $config['sub_mappings']) {
+            $subMappings = $config['sub_mappings'];
+        }
 
-            if (!$entity && (!array_key_exists('only_update', $config) || !$config['only_update'])) {
-                $entity = new $entityClassName();
-            }
-
-            if ($entity) {
-                foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
-                    if ($value = $this->getValue($filePropertyKey, $row)) {
-                        $this->propertyAccessor->setValue($entity, $entityPropertyKey, $value);
-                    }
-                }
-
-                $importHelper?->completeData($entity, $row, $additionnalData);
-
-                $this->em->persist($entity);
-                $nb++;
-
-                if ($nb % 1000 === 0) {
-                    $this->em->flush();
+        if ($subPropertyKey) {
+            $hasValue = false;
+            foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
+                if ($this->getValue($filePropertyKey, $row) !== '') {
+                    $hasValue = true;
                 }
             }
+
+            if (!$hasValue) {
+                return;
+            }
         }
 
-        $this->em->flush();
-
-        $importHelper?->afterImport($additionnalData);
-
-        if ($deleteAfterImport) {
-            unlink($path);
+        $entity = null;
+        if ($uniqueKey) {
+            $entity = $repository->findOneBy([$uniqueKey => $this->getValue($mappings[$uniqueKey], $row)]);
         }
 
-        return $nb;
+        if (!$entity && (!array_key_exists('only_update', $config) || !$config['only_update'])) {
+            $entity = new $entityClassName();
+        }
+
+        if ($entity) {
+            if ($subPropertyKey) {
+                $this->propertyAccessor->setValue($previousEntity, $subPropertyKey, $entity);
+            }
+
+            foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
+                if ($value = $this->getValue($filePropertyKey, $row)) {
+                    $this->propertyAccessor->setValue($entity, $entityPropertyKey, $value);
+                }
+            }
+
+            $this->em->persist($entity);
+
+            $importHelper?->completeData($entity, $row, $additionnalData);
+
+            if (!$subPropertyKey) {
+                $this->nbLinesImported++;
+            }
+
+            foreach ($subMappings as $subPropertyKey => $subConfigName) {
+                $this->create($row, $subConfigName, $subPropertyKey, $entity, $additionnalData);
+            }
+        }
     }
 
     /**

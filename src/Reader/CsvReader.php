@@ -9,11 +9,11 @@ class CsvReader extends AbstractReader
         return [Reader::CSV];
     }
 
-    public function read(string $path, ?string $encoding = null): \Generator
+    public function read(string $path, array $options = []): \Generator
     {
         $file = fopen($path, 'r');
-        if ($encoding) {
-            stream_filter_append($file, $encoding, STREAM_FILTER_READ);
+        if (array_key_exists('encoding', $options)) {
+            stream_filter_append($file, $options['encoding'], STREAM_FILTER_READ);
         }
 
         $header = (array)fgetcsv($file);

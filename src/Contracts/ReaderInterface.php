@@ -6,5 +6,5 @@ interface ReaderInterface
 {
     public function getSupportedMimeTypes(): array;
 
-    public function read(string $path, ?string $encoding = null): iterable;
+    public function read(string $path, array $options = []): iterable;
 }

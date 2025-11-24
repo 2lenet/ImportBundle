@@ -8,6 +8,8 @@ use Lle\ImportBundle\Exception\ReaderException;
 class Reader
 {
     public const string CSV = 'text/csv';
+    public const string XLS = 'application/vnd.ms-excel';
+    public const string XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
     public function __construct(
         protected iterable $readers,
@@ -17,9 +19,9 @@ class Reader
     /**
      * @throws ReaderException
      */
-    public function read(string $path, ?string $encoding = null): iterable
+    public function read(string $path, array $options = []): iterable
     {
-        return $this->getReader(mime_content_type($path))->read($path, $encoding);
+        return $this->getReader(mime_content_type($path))->read($path, $options);
     }
 
     /**
