@@ -21,7 +21,7 @@ class Reader
      */
     public function read(string $path, array $options = []): iterable
     {
-        return $this->getReader(mime_content_type($path))->read($path, $options);
+        return $this->getReader((string)mime_content_type($path))->read($path, $options);
     }
 
     /**

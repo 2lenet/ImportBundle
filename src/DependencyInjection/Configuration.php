@@ -11,6 +11,7 @@ class Configuration implements ConfigurationInterface
     {
         $treeBuilder = new TreeBuilder('lle_import');
         $rootNode = $treeBuilder->getRootNode();
+        /** @phpstan-ignore-next-line */
         $rootNode
             ->children()
                 ->arrayNode('configs')
@@ -35,8 +36,8 @@ class Configuration implements ConfigurationInterface
                             ->end()
                             ->arrayNode('options')
                                 ->children()
-                                    ->scalarNode('excel_sheet_name')->end()
                                     ->scalarNode('encoding')->end()
+                                    ->scalarNode('excel_sheet_name')->end()
                                 ->end()
                             ->end()
                         ->end()

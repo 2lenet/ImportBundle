@@ -25,7 +25,9 @@ class ImportService
         protected Reader $reader,
         protected PropertyAccessorInterface $propertyAccessor,
     ) {
-        $this->configurations = $this->parameterBag->get('lle_import.configs');
+        /** @var array $config */
+        $config = $this->parameterBag->get('lle_import.configs');
+        $this->configurations = $config;
     }
 
     /**
@@ -84,6 +86,7 @@ class ImportService
         $this->checkConfigMappingsExists($this->configurations[$configName]);
 
         $config = $this->configurations[$configName];
+        /** @var class-string $entityClassName */
         $entityClassName = $config['entity'];
         $uniqueKey = null;
         if (array_key_exists('unique_key', $config) && $config['unique_key']) {
@@ -217,7 +220,7 @@ class ImportService
             }
 
             $importHelper = $this->container->get($config['import_helper_service']);
-            if (!is_a($importHelper, ImportHelperInterface::class)) {
+            if (!is_object($importHelper) || !is_a($importHelper, ImportHelperInterface::class)) {
                 throw new ImportException('Import helper "' . $config['import_helper_service'] . '" does not implement ImportHelperInterface.');
             }
 
@@ -238,7 +241,7 @@ class ImportService
             }
 
             $reader = $this->container->get($config['reader']);
-            if (!is_a($reader, ReaderInterface::class)) {
+            if (!is_object($reader) || !is_a($reader, ReaderInterface::class)) {
                 throw new ImportException('Reader "' . $config['reader'] . '" does not implement ReaderInterface.');
             }
 

@@ -2,6 +2,7 @@
 
 namespace Lle\ImportBundle\Reader;
 
+use Lle\ImportBundle\Exception\ReaderException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ExcelReader extends AbstractReader
@@ -16,6 +17,11 @@ class ExcelReader extends AbstractReader
         $spreadsheet = IOFactory::load($path);
         if (array_key_exists('excel_sheet_name', $options)) {
             $sheet = $spreadsheet->getSheetByName($options['excel_sheet_name']);
+            if (!$sheet) {
+                throw new ReaderException(
+                    'Import action: sheet name ' . $options['excel_sheet_name'] . ' not found'
+                );
+            }
         } else {
             $sheet = $spreadsheet->getSheet($spreadsheet->getFirstSheetIndex());
         }
