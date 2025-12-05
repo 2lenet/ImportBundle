@@ -29,6 +29,7 @@ class ExcelReader extends AbstractReader
             break;
         }
 
+        $nbHeaders = count($header);
         foreach ($sheet->getRowIterator(2) as $key => $row) {
             if ($key > $sheet->getHighestDataRow()) {
                 break;
@@ -37,6 +38,10 @@ class ExcelReader extends AbstractReader
             $data = [];
             foreach ($row->getCellIterator() as $cell) {
                 $data[] = $cell->getValue();
+
+                if (count($data) === $nbHeaders) {
+                    break;
+                }
             }
 
             yield array_combine($header, $data);
