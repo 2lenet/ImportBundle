@@ -112,18 +112,18 @@ class ImportService
             $subMappings = $config['sub_mappings'];
         }
 
-        if ($subPropertyKey) {
-            $hasValue = false;
-            foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
-                if ($this->getValue($filePropertyKey, $row) !== '') {
-                    $hasValue = true;
-                }
-            }
 
-            if (!$hasValue) {
-                return;
+        $hasValue = false;
+        foreach ($mappings as $entityPropertyKey => $filePropertyKey) {
+            if ($this->getValue($filePropertyKey, $row) !== '') {
+                $hasValue = true;
             }
         }
+
+        if (!$hasValue) {
+            return;
+        }
+
 
         $entity = null;
         if ($uniqueKey) {
