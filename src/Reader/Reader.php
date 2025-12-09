@@ -36,6 +36,6 @@ class Reader
             }
         }
 
-        throw new ReaderException('Import action: format ' . $format . ' is not supported');
+        throw new ReaderException('Import reader: format ' . $format . ' is not supported');
     }
 }

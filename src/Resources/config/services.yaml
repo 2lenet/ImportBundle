@@ -4,6 +4,13 @@ services:
         public: false
         autoconfigure: true
 
+    _instanceof:
+        Lle\ImportBundle\Contracts\ReaderInterface:
+            tags: ['import.reader']
+
+        Lle\ImportBundle\Contracts\ImportHelperInterface:
+            tags: ['import.helper']
+
     Lle\ImportBundle\Command\:
         resource: '../../Command'
 
@@ -11,10 +18,13 @@ services:
         arguments:
             $readers: !tagged_iterator import.reader
 
+    Lle\ImportBundle\Helper\Helper:
+        arguments:
+            $helpers: !tagged_iterator import.helper
+
     Lle\ImportBundle\Reader\:
         exclude: '../../Reader/Reader.php'
         resource: '../../Reader'
-        tags: [import.reader]
 
     Lle\ImportBundle\Service\:
         resource: '../../Service'
@@ -25,4 +35,5 @@ services:
             - '@service_container'
             - '@doctrine.orm.entity_manager'
             - '@Lle\ImportBundle\Reader\Reader'
+            - '@Lle\ImportBundle\Helper\Helper'
             - '@property_accessor'

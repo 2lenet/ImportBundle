@@ -7,6 +7,7 @@ use Lle\ImportBundle\Contracts\ImportHelperInterface;
 use Lle\ImportBundle\Contracts\ReaderInterface;
 use Lle\ImportBundle\Exception\ImportException;
 use Lle\ImportBundle\Exception\ReaderException;
+use Lle\ImportBundle\Helper\Helper;
 use Lle\ImportBundle\Reader\Reader;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -23,6 +24,7 @@ class ImportService
         protected ContainerInterface $container,
         protected EntityManagerInterface $em,
         protected Reader $reader,
+        protected Helper $helper,
         protected PropertyAccessorInterface $propertyAccessor,
     ) {
         /** @var array $config */
@@ -215,16 +217,7 @@ class ImportService
     public function getImportHelperService(array $config): ?ImportHelperInterface
     {
         if (array_key_exists('import_helper_service', $config) && $config['import_helper_service']) {
-            if (!$this->container->has($config['import_helper_service'])) {
-                throw new ImportException('Import helper "' . $config['import_helper_service'] . '" does not exist.');
-            }
-
-            $importHelper = $this->container->get($config['import_helper_service']);
-            if (!is_object($importHelper) || !is_a($importHelper, ImportHelperInterface::class)) {
-                throw new ImportException('Import helper "' . $config['import_helper_service'] . '" does not implement ImportHelperInterface.');
-            }
-
-            return $importHelper;
+            return $this->helper->getHelper($config['import_helper_service']);
         }
 
         return null;
@@ -236,16 +229,7 @@ class ImportService
     public function getReader(array $config): ?ReaderInterface
     {
         if (array_key_exists('reader', $config) && $config['reader']) {
-            if (!$this->container->has($config['reader'])) {
-                throw new ImportException('Reader "' . $config['reader'] . '" does not exist.');
-            }
-
-            $reader = $this->container->get($config['reader']);
-            if (!is_object($reader) || !is_a($reader, ReaderInterface::class)) {
-                throw new ImportException('Reader "' . $config['reader'] . '" does not implement ReaderInterface.');
-            }
-
-            return $reader;
+            return $this->reader->getReader($config['reader']);
         }
 
         return null;

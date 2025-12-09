@@ -2,10 +2,11 @@
 
 namespace Lle\ImportBundle\Reader;
 
+use Lle\ImportBundle\Contracts\ReaderInterface;
 use Lle\ImportBundle\Exception\ReaderException;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-class ExcelReader extends AbstractReader
+class ExcelReader implements ReaderInterface
 {
     public function getSupportedMimeTypes(): array
     {

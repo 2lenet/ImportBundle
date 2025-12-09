@@ -2,6 +2,7 @@
 
 namespace Lle\ImportBundle\DependencyInjection;
 
+use Lle\ImportBundle\Contracts\ImportHelperInterface;
 use Lle\ImportBundle\Contracts\ReaderInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -20,6 +21,7 @@ class LleImportExtension extends Extension implements ExtensionInterface
         $processedConfig = $this->processConfiguration($configuration, $configs);
 
         $container->registerForAutoconfiguration(ReaderInterface::class)->addTag('import.reader');
+        $container->registerForAutoconfiguration(ImportHelperInterface::class)->addTag('import.helper');
 
         $container->setParameter('lle_import.configs', $processedConfig['configs']);
     }

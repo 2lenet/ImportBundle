@@ -2,9 +2,10 @@
 
 namespace Lle\ImportBundle\Reader;
 
+use Lle\ImportBundle\Contracts\ReaderInterface;
 use Lle\ImportBundle\Exception\ReaderException;
 
-class CsvReader extends AbstractReader
+class CsvReader implements ReaderInterface
 {
     public function getSupportedMimeTypes(): array
     {
