@@ -3,6 +3,7 @@
 namespace Lle\ImportBundle\Helper;
 
 use Lle\ImportBundle\Contracts\ImportHelperInterface;
+use Lle\ImportBundle\Exception\HelperException;
 
 class Helper
 {
